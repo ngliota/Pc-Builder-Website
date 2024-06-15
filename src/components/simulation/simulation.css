@@ -1,0 +1,45 @@
+.experience__dropdown {
+    display: flex;
+    align-items: relative;
+    margin-bottom: 20px;
+  }
+  
+  .experience__dropdown-header {
+    display: flex;
+    align-items: relative;
+    width: 250px; /* Set a fixed width for consistency */
+  }
+  
+  .experience__dropdown-icon {
+    margin-right: 10px;
+    font-size: 24px; /* Adjust icon size */
+  }
+  
+  .experience__dropdown select {
+    flex-grow: 1;
+    padding: 10px;
+    align-self: flex-end;
+    font-size: 16px; /* Increase the font size */
+    width: 100%;
+    width: 500px; /* Set a maximum width for dropdown */
+  }
+  
+  .experience__dropdown h3 {
+    margin: 0;
+    font-size: 16px; /* Increase the font size */
+  }
+  
+  .experience__container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .experience__frontend {
+    width: 100%;
+    max-width: 80%; /* Adjust based on your design */
+  }
+  
+  .experience__content {
+    width: 100%;
+  }
+  
