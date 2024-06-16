@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/header/Header';
@@ -7,8 +8,9 @@ import Experience from './components/experience/Experience';
 import Footer from './components/footer/Footer';
 import Contact from './components/contact/Contact';
 import Simulation from './components/simulation/Simulation';
-import Login from './components/login/Login'; // Import Login component
-import Admin from './components/admin/Admin'; // Import Admin component
+import Login from './components/login/Login';
+import Signup from './components/signup/Signup';
+import Admin from './components/admin/Admin';
 
 const App = () => {
   return (
@@ -29,8 +31,9 @@ const App = () => {
             }
           />
           <Route path="/login" element={<Login />} />
-          <Route path="/simulation" element={<Simulation />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/simulation" element={<Simulation />} />
         </Routes>
       </div>
     </Router>

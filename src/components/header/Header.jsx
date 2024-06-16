@@ -13,7 +13,7 @@ const Header = () => {
         <h1>Note, plan, build, play</h1>
         <h5 className="text-light">PC Builder Website</h5>
         <div className='cta'>
-      <Link to="/simulation" className='btn btn-primary'>Get Started</Link>
+      <Link to="/login" className='btn btn-primary'>Get Started</Link>
       </div>
       <HeaderSocials />
 
