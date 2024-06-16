@@ -1,8 +1,9 @@
 import React from 'react'
 import './header.css'
 import CTA from './CTA'
-import ME from '../../assets/me.png'
+import ME from '../../assets/pcreal.png'
 import HeaderSocials from './HeaderSocials'
+import {Link} from 'react-router-dom';
 
 const Header = () => {
   return (
@@ -11,7 +12,9 @@ const Header = () => {
         <h5>Welcome</h5>
         <h1>Note, plan, build, play</h1>
         <h5 className="text-light">PC Builder Website</h5>
-      <CTA />
+        <div className='cta'>
+      <Link to="/simulation" className='btn btn-primary'>Get Started</Link>
+      </div>
       <HeaderSocials />
 
       <div className="me">

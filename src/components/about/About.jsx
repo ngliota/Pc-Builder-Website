@@ -7,7 +7,7 @@ import { Slide } from 'react-slideshow-image';
 import "react-slideshow-image/dist/styles.css";
 import review1 from "../../assets/pc1.jpg"
 import review2 from "../../assets/pc2.jpg"
-import review3 from "../../assets/avatar3.jpg"
+import review3 from "../../assets/pc3.jpg"
 
 
 

@@ -7,7 +7,8 @@ import Experience from './components/experience/Experience';
 import Footer from './components/footer/Footer';
 import Contact from './components/contact/Contact';
 import Simulation from './components/simulation/Simulation';
-import CTA from './components/header/CTA';
+import Login from './components/login/Login'; // Import Login component
+import Admin from './components/admin/Admin'; // Import Admin component
 
 const App = () => {
   return (
@@ -20,7 +21,6 @@ const App = () => {
               <>
                 <Header />
                 <Nav />
-                <CTA />
                 <About />
                 <Experience />
                 <Contact />
@@ -28,7 +28,9 @@ const App = () => {
               </>
             }
           />
+          <Route path="/login" element={<Login />} />
           <Route path="/simulation" element={<Simulation />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </div>
     </Router>
