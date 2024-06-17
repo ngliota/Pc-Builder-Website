@@ -1,22 +1,59 @@
-import React from 'react'
-import './nav.css'
-import {AiOutlineHome} from 'react-icons/ai'
-import {AiOutlineUser} from 'react-icons/ai'
-import {MdOutlineEmail} from 'react-icons/md'
-import { HiOutlineWrenchScrewdriver } from "react-icons/hi2";
-import{useState} from 'react'
+import React, { useContext } from 'react';
+import './nav.css';
+import axios from 'axios';
+import { AuthContext } from '../../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 
+const axiosInstance = axios.create({
+  withCredentials: true,
+});
 
 const Nav = () => {
-  const [activeNav, setActiveNav] = useState('#')
-  return (
-    <nav>
-      <a href="#" onClick={() => setActiveNav('#')}className={activeNav === '#' ? 'active' : ''}><AiOutlineHome /></a>
-      <a href="#about" onClick={() => setActiveNav('#about')} className={activeNav === '#about' ? 'active' : ''}><AiOutlineUser /></a>
-      <a href="#experience" onClick={() => setActiveNav('#experience')} className={activeNav === '#experience' ? 'active' : ''}><HiOutlineWrenchScrewdriver /></a>
-      <a href="#contact" onClick={() => setActiveNav('#contact')} className={activeNav === '#contact' ? 'active' : ''}><MdOutlineEmail /></a>
-    </nav>
-  )
-}
+  const { isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-export default Nav
+  const handleLogout = async () => {
+    try {
+      const response = await axiosInstance.post('http://localhost:8081/logout');
+      if (response.status === 200) {
+        setIsLoggedIn(false); // Update isLoggedIn state on successful logout
+        navigate('/login'); // Redirect to login page after logout
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  const scrollToElement = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <nav className="futuristic-nav">
+      <div className="nav-container">
+        <div className="nav-links">
+          <Link to="/home#" onClick={() => scrollToElement('home')} className="nav-link">Home</Link>
+          <Link to="/home#about" onClick={() => scrollToElement('about')} className="nav-link">About</Link>
+          <Link to="/home#experience" onClick={() => scrollToElement('experience')} className="nav-link">Roadmap</Link>
+          <Link to="/home#contact" onClick={() => scrollToElement('contact')} className="nav-link">Contact</Link>
+          {isLoggedIn && <Link to="/simulation" onClick={() => scrollToElement('simulation')} className="nav-link">Simulation</Link>}
+          {isLoggedIn && <Link to="/history" className="nav-link">History</Link>}
+        </div>
+        <div className="auth-options">
+          {isLoggedIn ? (
+            <button onClick={handleLogout} className="btn btn-primary">Logout</button>
+          ) : (
+            <Link to="/login" className="btn btn-primary">Login</Link>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Nav;

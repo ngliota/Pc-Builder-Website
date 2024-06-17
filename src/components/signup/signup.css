@@ -1,0 +1,67 @@
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.7;
+    background: transparent; /* Make background transparent */
+    color: var(--color-white); /* Use your custom text color */
+    background-image: url('../../assets/bg-texture.png'); /* Adjust path as needed */
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .signup-form {
+    background: rgba(31, 31, 56, 0.8); /* Semi-transparent background color */
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .signup-form h2 {
+    margin-bottom: 1.5rem;
+    color: var(--color-primary); /* Use your custom primary color */
+  }
+  
+  .signup-form label {
+    display: block;
+    margin-bottom: 1rem;
+    color: var(--color-light); /* Use your custom light color */
+  }
+  
+  .signup-input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-top: 0.5rem;
+  }
+  
+  .signup-button {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--color-primary); /* Use your custom primary color */
+    color: var(--color-bg); /* Use your custom background color */
+    cursor: pointer;
+    margin-top: 1rem;
+  }
+  
+  .signup-button:hover {
+    background: var(--color-primary-variant); /* Use your custom primary variant color */
+  }
+  
+  .login-link {
+    margin-top: 1rem;
+    color: var(--color-primary); /* Use your custom primary color */
+    cursor: pointer;
+  }
+  
+  .login-link:hover {
+    color: var(--color-white); /* Use your custom text color */
+  }
+  

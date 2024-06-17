@@ -1,0 +1,37 @@
+/* history.css */
+
+.history-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  
+  .history-title {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  
+  .history-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .history-item {
+    margin-bottom: 20px;
+    padding: 12px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .history-item p {
+    margin: 0;
+    font-size: 16px;
+  }
+  
+  /* Optional: Add more styles as needed */
+  

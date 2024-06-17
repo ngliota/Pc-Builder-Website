@@ -6,19 +6,23 @@ import cors from 'cors';
 import mysql from 'mysql';
 import bcrypt from 'bcrypt';
 import session from 'express-session';
+import { v4 as uuidv4 } from 'uuid'; // Import UUID v4 function
 
 const app = express();
+
+// Middleware
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true
 }));
-app.use(express.json());
+app.use(express.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 
 const db = mysql.createConnection({
     host: "localhost",
     port: 3306,
-    user: 'root',
-    password: "",
+    user: "root", // Replace with your MySQL username
+    password: "", // Replace with your MySQL password
     database: 'pcbuildweb'
 });
 
@@ -31,108 +35,127 @@ db.connect(err => {
 });
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Set to true in production with HTTPS
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // Set to true in production if using HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours session lifetime
+    }
 }));
 
-// Admin login route
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    console.log(`Login attempt for user: ${username}`);
+// Helper function to check user credentials
+const checkCredentials = async (username, password, table) => {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT * FROM ${table} WHERE username = ?`;
+        db.query(query, [username], async (err, result) => {
+            if (err) {
+                return reject(err);
+            }
 
-    if (!username || !password) {
-        console.log('Missing username or password');
-        return res.status(400).json({ message: 'Username and password are required' });
-    }
+            if (result.length === 0) {
+                return resolve(null);
+            }
 
-    const query = 'SELECT * FROM admins WHERE username = ?';
-    db.query(query, [username], async (err, result) => {
+            const user = result[0];
+            const isValidPassword = await bcrypt.compare(password, user.password);
+
+            if (!isValidPassword) {
+                return resolve(null);
+            }
+
+            resolve(user);
+        });
+    });
+};
+
+// Logout route
+app.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
         if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ message: 'An error occurred while querying the database' });
+            console.error('Error destroying session:', err);
+            return res.status(500).json({ message: 'Error logging out' });
         }
-
-        if (result.length === 0) {
-            console.log('Invalid credentials: user not found');
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const admin = result[0];
-        console.log('Admin found:', admin);
-
-        const isValidPassword = await bcrypt.compare(password, admin.password);
-        console.log('Password valid:', isValidPassword);
-
-        if (!isValidPassword) {
-            console.log('Invalid credentials: incorrect password');
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        req.session.adminId = admin.id;
-        console.log('Login successful');
-        res.status(200).json({ message: 'Login successful' });
+        res.clearCookie('connect.sid'); // Clear session cookie
+        res.status(200).json({ message: 'Logout successful' });
     });
 });
 
-// Check if admin is logged in
-app.get('/admin', (req, res) => {
-    if (req.session.adminId) {
-        res.status(200).json({ message: 'Logged in' });
+// Signup route
+app.post('/signup', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    try {
+        // Check if the username already exists in the users table
+        const checkQuery = `SELECT * FROM users WHERE username = ?`;
+        db.query(checkQuery, [username], async (err, result) => {
+            if (err) {
+                throw err;
+            }
+
+            if (result.length > 0) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
+
+            // If username is unique, hash the password and insert into users table
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const userId = uuidv4(); // Generate UUID for user id using uuidv4()
+            const insertQuery = `INSERT INTO users (userid, username, password) VALUES (?, ?, ?)`;
+            db.query(insertQuery, [userId, username, hashedPassword], (err, result) => {
+                if (err) {
+                    throw err;
+                }
+                res.status(200).json({ message: 'Signup successful' });
+            });
+        });
+    } catch (error) {
+        console.error('Error signing up:', error);
+        return res.status(500).json({ message: 'An error occurred while processing your request' });
+    }
+});
+
+// Login route for both admins and users
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        // Check if the user exists in admins table
+        let user = await checkCredentials(username, password, 'admins');
+
+        if (!user) {
+            // If not found in admins table, check users table
+            user = await checkCredentials(username, password, 'users');
+        }
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Determine role based on which table the user was found in
+        const role = user.hasOwnProperty('admin_id') ? 'admin' : 'user';
+        req.session.user = user; // Store user information in session
+        req.session.role = role; // Store user role in session
+        res.status(200).json({ role });
+    } catch (error) {
+        console.error('Error logging in:', error);
+        return res.status(500).json({ message: 'An error occurred while processing your request' });
+    }
+});
+
+// Check if user is logged in
+app.get('/check-auth', (req, res) => {
+    if (req.session && req.session.user) {
+        res.status(200).json({ message: 'Logged in', user: req.session.user, role: req.session.role });
     } else {
         res.status(401).json({ message: 'Not logged in' });
     }
 });
 
-// Logout route
-app.post('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            return res.status(500).json({ message: 'Logout failed' });
-        }
-        res.status(200).json({ message: 'Logged out' });
-    });
+const PORT = process.env.PORT || 8081;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
-
-app.listen(8081, () => {
-    console.log("Connected to the server");
-});
-
-//singup
-
-app.post('/signup', (req, res) => {
-    const { username, password } = req.body;
-    console.log(`Signup attempt for user: ${username}`);
-  
-    if (!username || !password) {
-      console.log('Missing username or password');
-      return res.status(400).json({ message: 'Username and password are required' });
-    }
-  
-    const query = 'SELECT * FROM admins WHERE username = ?';
-    db.query(query, [username], async (err, result) => {
-      if (err) {
-        console.error('Database error:', err);
-        return res.status(500).json({ message: 'An error occurred while querying the database' });
-      }
-  
-      if (result.length > 0) {
-        console.log('Username already exists');
-        return res.status(409).json({ message: 'Username already exists' });
-      }
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const insertQuery = 'INSERT INTO admins (username, password) VALUES (?, ?)';
-      db.query(insertQuery, [username, hashedPassword], (err, result) => {
-        if (err) {
-          console.error('Database error:', err);
-          return res.status(500).json({ message: 'An error occurred while inserting the user' });
-        }
-  
-        console.log('User registered successfully');
-        res.status(201).json({ message: 'Signup successful' });
-      });
-    });
-  });
-  

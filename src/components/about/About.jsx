@@ -9,13 +9,11 @@ import review1 from "../../assets/pc1.jpg"
 import review2 from "../../assets/pc2.jpg"
 import review3 from "../../assets/pc3.jpg"
 
-
-
 const slideImages = [review1, review2, review3];
 
 const About = () => {
   return (
-    <section id='about'>
+    <section id="about"> {/* Change id to "about" */}
       <h5>Get To Know</h5>
       <h2>About Us</h2>
       <div className="container about__container">
