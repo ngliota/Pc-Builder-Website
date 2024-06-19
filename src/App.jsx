@@ -33,8 +33,8 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/simulation" element={<Simulation />} />
-            
-            {/* Redirect all other routes to '/home' */}
+            <Route path="/simulation/:simulationId" element={<Simulation />} />
+            <Route path="/history" element={<History />} />
             <Route path="*" element={<Navigate to="/home" />} />
           </Routes>
           <Footer />

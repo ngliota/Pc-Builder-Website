@@ -1,26 +1,16 @@
 import React, { useContext } from 'react';
 import './nav.css';
-import axios from 'axios';
 import { AuthContext } from '../../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
-const axiosInstance = axios.create({
-  withCredentials: true,
-});
-
 const Nav = () => {
-  const { isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
+  const { isLoggedIn, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      const response = await axiosInstance.post('http://localhost:8081/logout');
-      if (response.status === 200) {
-        setIsLoggedIn(false); // Update isLoggedIn state on successful logout
-        navigate('/login'); // Redirect to login page after logout
-      } else {
-        console.error('Unexpected response status:', response.status);
-      }
+      await logout();
+      navigate('/home'); // Redirect to login page after logout
     } catch (error) {
       console.error('Error logging out:', error);
     }
@@ -47,6 +37,7 @@ const Nav = () => {
         <div className="auth-options">
           {isLoggedIn ? (
             <button onClick={handleLogout} className="btn btn-primary">Logout</button>
+            
           ) : (
             <Link to="/login" className="btn btn-primary">Login</Link>
           )}

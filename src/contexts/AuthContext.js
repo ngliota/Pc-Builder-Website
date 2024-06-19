@@ -9,45 +9,74 @@ const axiosInstance = axios.create({
 });
 
 export const AuthProvider = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userid, setUserid] = useState(null);
+  const [authState, setAuthState] = useState({
+    isLoggedIn: false,
+    isLoading: true,
+    userid: null,
+  });
 
   useEffect(() => {
     const checkLoggedInStatus = async () => {
       try {
         const response = await axiosInstance.get('/check-auth');
-        if (response.data.loggedIn) {
-          setIsLoggedIn(true);
-          setUserid(response.data.userid);
+        if (response.status === 200 && response.data.message === 'Logged in') {
+          setAuthState({
+            isLoggedIn: true,
+            isLoading: false,
+            userid: response.data.user ? response.data.user.userid : null,
+          });
         } else {
-          setIsLoggedIn(false);
-          setUserid(null);
+          setAuthState({
+            isLoggedIn: false,
+            isLoading: false,
+            userid: null,
+          });
         }
       } catch (error) {
-        setIsLoggedIn(false);
-        setUserid(null);
-      } finally {
-        setIsLoading(false);
+        console.error('Error checking logged in status:', error);
+        setAuthState({
+          isLoggedIn: false,
+          isLoading: false,
+          userid: null,
+        });
       }
     };
 
     checkLoggedInStatus();
   }, []);
 
+  const setUserId = (userid) => {
+    setAuthState((prevState) => ({
+      ...prevState,
+      userid: userid,
+    }));
+  };
+
   const login = async (username, password) => {
     try {
       const response = await axiosInstance.post('/login', { username, password });
       if (response.status === 200) {
-        setIsLoggedIn(true);
-        setUserid(response.data.userid);
+        console.log('Logged in successfully. User ID:', response.data.user.userid); // Log userid here
+        setAuthState({
+          isLoggedIn: true,
+          isLoading: false,
+          userid: response.data.user.userid,
+        });
       } else {
-        setIsLoggedIn(false);
-        setUserid(null);
+        console.error('Login failed');
+        setAuthState({
+          isLoggedIn: false,
+          isLoading: false,
+          userid: null,
+        });
       }
     } catch (error) {
-      setIsLoggedIn(false);
-      setUserid(null);
+      console.error('Error logging in:', error);
+      setAuthState({
+        isLoggedIn: false,
+        isLoading: false,
+        userid: null,
+      });
       throw error;
     }
   };
@@ -56,18 +85,26 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axiosInstance.post('/logout');
       if (response.status === 200) {
-        setIsLoggedIn(false);
-        setUserid(null);
+        console.log('Logged out successfully');
+        setAuthState({
+          isLoggedIn: false,
+          isLoading: false,
+          userid: null,
+        });
       }
     } catch (error) {
-      setIsLoggedIn(false);
-      setUserid(null);
+      console.error('Error logging out:', error);
+      setAuthState({
+        isLoggedIn: false,
+        isLoading: false,
+        userid: null,
+      });
       throw error;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, userid, login, logout }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, setUserId }}>
       {children}
     </AuthContext.Provider>
   );

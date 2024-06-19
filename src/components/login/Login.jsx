@@ -66,6 +66,13 @@ const Login = () => {
           Don't have an account? Sign up
         </a>
       </form>
+
+      {/* Display userid if available */}
+      {userid && (
+        <div className="user-id-info">
+          <p>Logged in with userid: {userid}</p>
+        </div>
+      )}
     </div>
   );
 };

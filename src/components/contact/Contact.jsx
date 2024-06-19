@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './contact.css';
 import { MdOutlineEmail } from 'react-icons/md';
 import { FaGithub } from 'react-icons/fa';
-import {BsLinkedin} from 'react-icons/bs'
+import { BsLinkedin } from 'react-icons/bs';
 
 const Contact = () => {
   const [loading, setLoading] = useState(false);
@@ -14,10 +14,11 @@ const Contact = () => {
 
     const formEle = document.querySelector("form");
     const formData = new FormData(formEle);
+    formData.append("sheetName", "Feedback"); // Ensure it sends to the correct sheet
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbz6Z8XJ1ctSL_wnu_EM6Zac7okluOJnBkg4iLXCs2D0uci4V2crSJhQjHRoVoHijrsjmQ/exec",
+        "https://script.google.com/macros/s/AKfycbyPhMr-Sko1JL8N0OC9xNNSFzSTqqP4ZEqogTwxdtPcKYCwUQmwIakOerlCM9_st_U8/exec",
         {
           method: "POST",
           body: formData,
@@ -46,7 +47,7 @@ const Contact = () => {
       <h2>Contact Us</h2>
 
       <div className="container contact__container">
-        <div className="contact__option">
+        <div className="contact__options">
           <article className="contact__option">
             <MdOutlineEmail className='contact__option-icon' />
             <h4>Email</h4>
@@ -66,16 +67,16 @@ const Contact = () => {
             <a href="https://github.com/ngliota" target="_blank" rel="noopener noreferrer">Open my Github</a>
           </article>
         </div>
-        {/* END OF CONTACT OPTION*/}
+        {/* END OF CONTACT OPTIONS */}
 
-        <form className="form" onSubmit={(e) => Submit(e)}>
-          <label htmlFor="name">Name</label>
+        <form className="form" onSubmit={Submit}>
+          <label htmlFor="Name">Name</label>
           <input type="text" id="Name" name="Name" placeholder="Your Name" required />
 
-          <label htmlFor="email">Email</label>
+          <label htmlFor="Email">Email</label>
           <input type="email" id="Email" name="Email" placeholder="Your Email" required />
 
-          <label htmlFor="message">Message</label>
+          <label htmlFor="Message">Message</label>
           <textarea id="Message" name="Message" rows="7" placeholder="Your Message" required></textarea>
 
           <button type='submit' className='btn btn-primary' disabled={loading || formSubmitted}>

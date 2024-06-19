@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './signup.css'; // Import CSS file for styles
+import { AuthContext } from '../../contexts/AuthContext'; // Import AuthContext
 
 const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-const Signup = ({ setUserId }) => {
+const Signup = () => {
+  const { setUserId } = useContext(AuthContext); // Use AuthContext to get setUserId
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false); // State to track loading state
