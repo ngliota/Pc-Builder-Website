@@ -4,7 +4,7 @@ import axios from 'axios';
 export const AuthContext = createContext();
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8081', // Adjust baseURL based on your backend setup
+  baseURL: 'https://backend.agungyzs.site', // Adjust baseURL based on your backend setup
   withCredentials: true,
 });
 

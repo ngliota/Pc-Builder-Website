@@ -11,7 +11,7 @@ const Admin = () => {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const response = await axios.get('http://localhost:8081/check-auth', {
+        const response = await axios.get('https://backend.agungyzs.site/check-auth', {
           withCredentials: true, // Ensure cookies are included in the request
         });
         if (response.data.loggedIn) {
@@ -29,7 +29,7 @@ const Admin = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:8081/logout', {}, {
+      await axios.post('https://backend.agungyzs.site/logout', {}, {
         withCredentials: true, // Ensure cookies are included in the request
       });
       setIsLoggedIn(false);
@@ -41,7 +41,7 @@ const Admin = () => {
 
   const fetchNotes = async () => {
     try {
-      const response = await axios.get('http://localhost:8081/notes', {
+      const response = await axios.get('https://backend.agungyzs.site/notes', {
         withCredentials: true, // Ensure cookies are included in the request
       });
       if (response.data && response.data.notes) {

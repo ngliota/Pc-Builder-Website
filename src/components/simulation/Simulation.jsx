@@ -100,7 +100,7 @@ const Simulation = () => {
         if (simulationId) {
             const fetchSimulationDetails = async () => {
                 try {
-                    const response = await axios.get(`http://localhost:8081/api/get-simulation/${simulationId}`, { withCredentials: true });
+                    const response = await axios.get(`https://backend.agungyzs.site/api/get-simulation/${simulationId}`, { withCredentials: true });
                     const data = response.data;
                     setName(data.name);
                     setPhoneNumber(data.phoneNumber);
@@ -199,9 +199,9 @@ const Simulation = () => {
         try {
             let response;
             if (simulationId) {
-                response = await axios.put(`http://localhost:8081/api/update-simulation/${simulationId}`, selectedComponents, { withCredentials: true });
+                response = await axios.put(`https://backend.agungyzs.site/api/update-simulation/${simulationId}`, selectedComponents, { withCredentials: true });
             } else {
-                response = await axios.post('http://localhost:8081/api/save-simulation', selectedComponents, { withCredentials: true });
+                response = await axios.post('https://backend.agungyzs.site/api/save-simulation', selectedComponents, { withCredentials: true });
             }
             if (response.status === 200) {
                 handleReset();

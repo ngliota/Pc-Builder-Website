@@ -22,7 +22,7 @@ const Signup = () => {
     console.log('Signup attempt:', { username, password });
 
     try {
-      const response = await axiosInstance.post('http://localhost:8081/signup', { username, password });
+      const response = await axiosInstance.post('https://backend.agungyzs.site/signup', { username, password });
       console.log('Response from server:', response.data);
 
       if (response.data && response.data.message === 'Signup successful') {

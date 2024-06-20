@@ -78,7 +78,7 @@ const History = () => {
     const fetchSavedConfigs = async () => {
       console.log('Fetching saved configurations for user:', userid); // Debugging log
       try {
-        const response = await axios.get('http://localhost:8081/api/history', {
+        const response = await axios.get('https://backend.agungyzs.site/api/history', {
           withCredentials: true, // Ensure cookies are sent with the request
         });
         console.log('Fetched configurations:', response.data); // Debugging log
@@ -94,7 +94,7 @@ const History = () => {
   const handleDelete = async (simulationid) => {
     if (window.confirm('Are you sure you want to delete this saved simulation?')) {
       try {
-        await axios.delete(`http://localhost:8081/api/history/${simulationid}`, {
+        await axios.delete(`https://backend.agungyzs.site/api/history/${simulationid}`, {
           withCredentials: true, // Ensure cookies are sent with the request
         });
         setSavedConfigs(savedConfigs.filter(config => config.simulationid !== simulationid));
