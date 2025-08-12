@@ -1,22 +1,25 @@
 // src/App.jsx
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, } from "react-router-dom";
-import Home from "./pages/Home";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import LoginPage from "./pages/LoginPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import SideNavbarAdmin from "./components/SideNavbarAdmin";
+import React from "react"
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom"
+import Home from "./pages/Home"
+import Signup from "./pages/Signup"
+import LoginPage from "./pages/LoginPage"
+import AdminDashboard from "./pages/admin/AdminDashboard"
+import AdminLoginPage from "./pages/admin/AdminLoginPage" // Create this file
+import Navbar from "./components/Navbar"
+import Footer from "./components/Footer"
+import SideNavbarAdmin from "./components/SideNavbarAdmin"
 
-
-const ProtectedRoute = ({ element, redirectTo }) => {
-  const token = localStorage.getItem("adminToken");
-  return token ? element : <Navigate to={redirectTo} replace />;
-};
+const ProtectedRoute = ({ element, role }) => {
+  const token = localStorage.getItem(`${role}Token`)
+  const isAuthenticated = !!token
+  const redirectTo = role === "admin" ? "/admin" : "/login"
+  return isAuthenticated ? element : <Navigate to={redirectTo} replace />
+}
 
 const LayoutWrapper = ({ children }) => {
-  const location = useLocation();
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const location = useLocation()
+  const isAdminPage = location.pathname.startsWith("/admin")
 
   return (
     <>
@@ -35,23 +38,31 @@ const LayoutWrapper = ({ children }) => {
         </>
       )}
     </>
-  );
-};
+  )
+}
 
 function App() {
   return (
     <Router>
       <LayoutWrapper>
-      <Routes>
-        <Route path="/" element={<Home />} />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin" element={<AdminLoginPage />} />
 
-        {/* 404 - Redirect to Home */}
+          {/* Admin dashboard protected by JWT */}
+          <Route
+            path="/admin/dashboard"
+            element={<ProtectedRoute element={<AdminDashboard />} role="admin" />}
+          />
+
+          {/* 404 fallback to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
-
-      </Routes>
+        </Routes>
       </LayoutWrapper>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App
