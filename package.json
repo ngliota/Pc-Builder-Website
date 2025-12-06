@@ -7,11 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:products": "node backend/scripts/seedProducts.js",
+    "seed:products:wide": "node backend/scripts/seedProductsWide.js",
+    "clean:products:synthetic": "node backend/scripts/cleanSyntheticProducts.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "framer-motion": "^12.23.6",
+    "jspdf": "^2.5.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.0",

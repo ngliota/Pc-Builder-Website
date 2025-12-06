@@ -1,104 +1,115 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); // Indikator loading
-  const [error, setError] = useState(""); // Pesan error
-  const navigate = useNavigate();
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const navigate = useNavigate()
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true); // Aktifkan indikator loading
-    setError(""); // Reset pesan error
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
     try {
       const response = await fetch(`${API_URL}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
-      });
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("adminToken", data.token); // Simpan token
-        console.log("Login successful. Redirecting to dashboard.");
-        navigate("/admin/dashboard"); // Redirect ke dashboard
+        const data = await response.json()
+        localStorage.setItem("adminToken", data.token)
+        navigate("/admin/dashboard")
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Login failed. Please try again.");
+        const errorData = await response.json()
+        setError(errorData.message || "Login failed. Please try again.")
       }
     } catch (error) {
-      console.error("Login error:", error.message);
-      setError("An error occurred. Please try again later.");
+      console.error("Login error:", error.message)
+      setError("An error occurred. Please try again later.")
     } finally {
-      setLoading(false); // Matikan indikator loading
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Admin Login
-        </h1>
-        {error && (
-          <div className="mb-4 p-3 text-sm text-red-600 bg-red-100 border border-red-400 rounded">
-            {error}
+    <div className="relative min-h-screen overflow-hidden bg-[#030617] text-white">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-60"
+        style={{
+          background:
+            "radial-gradient(circle at 25% 20%, rgba(59,130,246,0.25), transparent 55%), radial-gradient(circle at 80% 10%, rgba(236,72,153,0.2), transparent 40%), radial-gradient(circle at 50% 80%, rgba(16,185,129,0.12), transparent 45%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-25"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "140px 140px",
+        }}
+      />
+
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-cyan-500/15 backdrop-blur">
+          <div className="mb-6 text-center">
+            <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/80">Admin</p>
+            <h1 className="mt-2 text-2xl font-semibold text-white">Control Panel Login</h1>
+            <p className="text-sm text-slate-300">Enter your credentials to access the dashboard.</p>
           </div>
-        )}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-gray-700"
+
+          {error && (
+            <div className="mb-4 rounded-lg border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                placeholder="admin@example"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-400 focus:border-cyan-400/60 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-400 focus:border-cyan-400/60 focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg border border-cyan-300/50 bg-cyan-500/20 px-4 py-2 text-sm font-semibold uppercase tracking-widest text-cyan-50 transition hover:border-cyan-300 hover:bg-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full px-4 py-2 text-white font-semibold rounded-md ${
-              loading
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
-            }`}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+              {loading ? "Signing in..." : "Login"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

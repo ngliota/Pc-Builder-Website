@@ -1,77 +1,70 @@
 // UploadMiddleware.js
-import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import express from "express";
+import multer from "multer"
+import path from "path"
+import { fileURLToPath } from "url"
+import fs from "fs"
+import express from "express"
 
-// Setup __dirname in ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-// Folder for uploads (you can expand later)
-const uploadDir = path.join(__dirname, "../uploads/profile");
-
-// Ensure directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log(`✅ Created upload directory: ${uploadDir}`);
+const ensureUploadDir = (subFolder = "profile") => {
+  const target = path.join(__dirname, "../uploads", subFolder)
+  if (!fs.existsSync(target)) {
+    fs.mkdirSync(target, { recursive: true })
+    console.log(`✅ Created upload directory: ${target}`)
+  }
+  return target
 }
 
-// Multer storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
-  },
-});
+const createStorage = (subFolder) =>
+  multer.diskStorage({
+    destination: (req, file, cb) => cb(null, ensureUploadDir(subFolder)),
+    filename: (req, file, cb) => {
+      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+      cb(null, uniqueName + path.extname(file.originalname))
+    },
+  })
 
-// File type filter (only jpg, jpeg, png)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only JPG, JPEG, PNG files are allowed"));
-  }
-};
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"]
+  if (allowedTypes.includes(file.mimetype)) cb(null, true)
+  else cb(new Error("Only JPG, JPEG, PNG files are allowed"))
+}
 
-// Multer config
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
-});
+const createUploader = (subFolder = "profile") =>
+  multer({
+    storage: createStorage(subFolder),
+    fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 },
+  })
 
-// === Exported helpers ===
+export const singleImageUpload = (subFolder = "profile", fieldName = "photo") =>
+  createUploader(subFolder).single(fieldName)
 
-// Upload single image (e.g., for profile photo)
-export const uploadSingleImage = upload.single("photo");
+export const multiImageUpload = (subFolder = "profile", fieldName = "photos", max = 5) =>
+  createUploader(subFolder).array(fieldName, max)
 
-// Upload multiple (max 5)
-export const uploadMultipleImages = upload.array("photos", 5);
-
-// Serve static files
 export const serveStaticUploads = (app) => {
-  const uploadsPath = path.join(__dirname, "../uploads");
-  app.use("/uploads", express.static(uploadsPath));
-  console.log("📁 Serving uploads at /uploads");
-};
+  const uploadsPath = path.join(__dirname, "../uploads")
+  app.use("/uploads", express.static(uploadsPath))
+  console.log("📁 Serving uploads at /uploads")
+}
 
-// Error handler for multer
 export const handleMulterError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    return res.status(400).json({ error: `Multer error: ${err.message}` });
-  } else if (err) {
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({ error: "File too large (max 5MB)." });
-    }
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: `Multer error: ${err.message}` })
   }
-  next();
-};
+  if (err) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "File too large (max 5MB)." })
+    }
+    return res.status(400).json({ error: err.message })
+  }
+  return next()
+}
 
-export default upload;
+export const profileImageUpload = singleImageUpload("profile", "photo")
+export const productImageUpload = singleImageUpload("products", "image")
+
+export default createUploader()

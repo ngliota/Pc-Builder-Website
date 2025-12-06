@@ -7,6 +7,7 @@ import {
   updateAdmin,
 } from "../controllers/adminController.js";
 import { body } from "express-validator";
+import { verifyAdminToken } from "../middleware/AuthMiddleware.js";
 
 const router = express.Router();
 
@@ -24,12 +25,12 @@ router.post(
 router.post("/login", loginAdmin);
 
 // GET /api/admin/all
-router.get("/all", getAllAdmins);
+router.get("/all", verifyAdminToken, getAllAdmins);
 
 // DELETE /api/admin/:id
-router.delete("/:id", deleteAdmin);
+router.delete("/:id", verifyAdminToken, deleteAdmin);
 
 // PUT /api/admin/:id
-router.put("/:id", updateAdmin);
+router.put("/:id", verifyAdminToken, updateAdmin);
 
 export default router;

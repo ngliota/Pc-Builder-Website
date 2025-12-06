@@ -41,6 +41,12 @@ export const registerUser = async (req, res) => {
       return res.status(409).json({ message: "Email already registered" });
     }
 
+    // Check existing phone
+    const existingPhone = await User.findOne({ where: { phone } });
+    if (existingPhone) {
+      return res.status(409).json({ message: "Phone number already registered" });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -79,6 +85,32 @@ export const registerUser = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Register error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+// === LOGIN USER ===
+export const loginUser = async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username and password are required" });
+  }
+  try {
+    const user = await User.findOne({ where: { username } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ message: "Invalid credentials" });
+    const token = jwt.sign(
+      { id: user.userid, username: user.username, role: "user" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      user: { id: user.userid, username: user.username, email: user.email, phone: user.phone },
+    });
+  } catch (err) {
+    console.error("Login error:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

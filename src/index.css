@@ -1,1 +1,276 @@
 @import "tailwindcss";
+
+/* Futuristic galaxy/starfield background */
+:root {
+  --space-bg: #050816;
+}
+
+/* Prevent horizontal scrolling from animated decorations */
+html,
+body {
+  overflow-x: hidden;
+  background-color: var(--space-bg);
+  color: #f8fafc;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+.starfield {
+  position: relative;
+  /* Nebula glows + diagonal star overlay */
+  background:
+              url("/textures/starfield-diagonal.svg") center 0 / 1400px 860px repeat,
+              radial-gradient(1200px 600px at 50% -10%, rgba(29,78,216,0.22), transparent),
+              radial-gradient(800px 400px at 80% 10%, rgba(99,102,241,0.20), transparent),
+              radial-gradient(600px 300px at 20% 20%, rgba(236,72,153,0.18), transparent),
+              var(--space-bg);
+  background-blend-mode: screen, normal, normal, normal, normal;
+}
+
+/* star layers */
+.starfield::before,
+.starfield::after {
+  content: "";
+  position: fixed; /* cover viewport regardless of scroll */
+  inset: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+  /* Denser tiling and brighter base */
+  opacity: 0.9;
+  z-index: -1;
+}
+
+/* small distant stars */
+.starfield::before {
+  /* Pair each star with a soft halo to reduce the "tile" look */
+  background-image:
+    radial-gradient(8px 8px at 22px 32px, rgba(99,102,241,0.25) 30%, transparent 31%),
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.96) 50%, transparent 51%),
+
+    radial-gradient(10px 10px at 102px 82px, rgba(59,130,246,0.22) 28%, transparent 29%),
+    radial-gradient(2px 2px at 100px 80px, rgba(255,255,255,0.9) 50%, transparent 51%),
+
+    radial-gradient(9px 9px at 162px 122px, rgba(236,72,153,0.22) 26%, transparent 27%),
+    radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.92) 50%, transparent 51%),
+
+    radial-gradient(8px 8px at 62px 152px, rgba(147,197,253,0.22) 26%, transparent 27%),
+    radial-gradient(2px 2px at 60px 150px, rgba(255,255,255,0.88) 50%, transparent 51%);
+  background-size:
+    160px 160px, 160px 160px,
+    200px 200px, 200px 200px,
+    180px 180px, 180px 180px,
+    220px 220px, 220px 220px;
+  animation:
+    twinkle 8s linear infinite,
+    driftSlow 120s linear infinite;
+}
+
+/* bigger nearby stars */
+.starfield::after {
+  /* Nearby brighter stars with larger halos */
+  background-image:
+    radial-gradient(14px 14px at 42px 62px, rgba(99,102,241,0.26) 22%, transparent 23%),
+    radial-gradient(3px 3px at 40px 60px, rgba(255,255,255,0.98) 50%, transparent 51%),
+
+    radial-gradient(16px 16px at 142px 32px, rgba(59,130,246,0.26) 20%, transparent 21%),
+    radial-gradient(3px 3px at 140px 30px, rgba(255,255,255,0.95) 50%, transparent 51%),
+
+    radial-gradient(16px 16px at 182px 172px, rgba(236,72,153,0.26) 20%, transparent 21%),
+    radial-gradient(3px 3px at 180px 170px, rgba(255,255,255,0.96) 50%, transparent 51%);
+  background-size:
+    180px 180px, 180px 180px,
+    220px 220px, 220px 220px,
+    200px 200px, 200px 200px;
+  animation:
+    twinkle 10s linear infinite reverse,
+    driftFast 90s linear infinite;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.7; }
+  50% { opacity: 1.0; }
+  100% { opacity: 0.7; }
+}
+
+/* parallax-style slow drift to break up repetition */
+@keyframes driftSlow {
+  from { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+  to   { background-position: -200px -120px, -200px -120px, -140px -60px, -140px -60px, -180px -100px, -180px -100px, -220px -140px, -220px -140px; }
+}
+@keyframes driftFast {
+  from { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+  to   { background-position: 200px -80px, 200px -80px, 160px -40px, 160px -40px, 220px -100px, 220px -100px; }
+}
+
+/* Navbar starfield variant */
+.nav-starfield {
+  position: relative;
+  background-color: rgba(3,7,18,0.7); /* slate-950/70 */
+  backdrop-filter: blur(6px);
+  overflow: hidden; /* contain comet and star drift */
+}
+
+/* Textured gray moon positioned in the navbar (top-right) */
+.nav-moon {
+  position: absolute;
+  /* Show only ~3/4 by pushing it out of the corner */
+  top: -36px;
+  right: -36px;
+  width: 160px;
+  height: 160px;
+  pointer-events: none;
+  border-radius: 50%;
+  /* more realistic, desaturated grays with limb shading */
+  background:
+    /* subtle limb darkening */
+    radial-gradient(120px 120px at 60% 45%, rgba(0,0,0,0.18), transparent 60%),
+    /* main disc */
+    radial-gradient(closest-side at 48% 50%, #d9dde2 0%, #c7ccd1 62%, #a7adb4 100%),
+    /* prominent craters */
+    radial-gradient(28px 28px at 32% 38%, rgba(70,80,92,0.35) 0 38%, transparent 40%),
+    radial-gradient(22px 22px at 68% 56%, rgba(70,80,92,0.32) 0 36%, transparent 38%),
+    radial-gradient(18px 18px at 55% 26%, rgba(70,80,92,0.3) 0 34%, transparent 36%),
+    radial-gradient(14px 14px at 72% 34%, rgba(70,80,92,0.28) 0 32%, transparent 34%),
+    radial-gradient(12px 12px at 42% 66%, rgba(70,80,92,0.26) 0 30%, transparent 32%),
+    radial-gradient(10px 10px at 35% 58%, rgba(70,80,92,0.24) 0 28%, transparent 30%),
+    radial-gradient(9px 9px at 58% 70%, rgba(70,80,92,0.22) 0 26%, transparent 28%);
+  box-shadow:
+    inset 8px 10px 20px rgba(255,255,255,0.2),
+    inset -14px -18px 26px rgba(0,0,0,0.28),
+    0 0 18px rgba(148,163,184,0.25),
+    0 0 36px rgba(99,102,241,0.15);
+  z-index: 1;
+}
+
+.nav-moon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* subtle mottled surface texture to reduce "cartoony" look */
+  background-image:
+    radial-gradient(1px 1px at 12px 8px, rgba(0,0,0,0.08) 50%, transparent 52%),
+    radial-gradient(1px 1px at 22px 18px, rgba(255,255,255,0.07) 50%, transparent 52%),
+    radial-gradient(1px 1px at 34px 12px, rgba(0,0,0,0.06) 50%, transparent 52%),
+    radial-gradient(1px 1px at 8px 26px, rgba(255,255,255,0.06) 50%, transparent 52%);
+  background-size: 28px 28px, 30px 30px, 26px 26px, 24px 24px;
+  background-repeat: repeat;
+  opacity: 0.22;
+  pointer-events: none;
+}
+.nav-starfield::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(6px 6px at 22px 14px, rgba(99,102,241,0.28) 28%, transparent 29%),
+    radial-gradient(2px 2px at 20px 10px, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(8px 8px at 92px 32px, rgba(59,130,246,0.26) 26%, transparent 27%),
+    radial-gradient(2px 2px at 90px 28px, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(8px 8px at 162px 22px, rgba(236,72,153,0.26) 26%, transparent 27%),
+    radial-gradient(2px 2px at 160px 18px, rgba(255,255,255,0.95) 50%, transparent 51%);
+  background-size: 200px 80px, 200px 80px, 220px 80px, 220px 80px, 240px 80px, 240px 80px;
+  background-repeat: repeat-x;
+  opacity: 0.9;
+  animation: twinkle 9s linear infinite, driftFast 60s linear infinite;
+}
+
+/* Comet streak across the navbar */
+.nav-starfield::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -15%;
+  width: 220px;
+  height: 3px;
+  pointer-events: none;
+  background:
+    radial-gradient(closest-side, rgba(255,255,255,0.95), rgba(255,255,255,0.4) 60%, transparent 70%) 0% 50% / 18px 18px no-repeat,
+    linear-gradient(90deg, rgba(147,197,253,0.0), rgba(147,197,253,0.55), rgba(99,102,241,0.0));
+  filter: drop-shadow(0 0 10px rgba(147,197,253,0.6)) drop-shadow(0 0 18px rgba(99,102,241,0.5));
+  transform: translateY(-50%);
+  animation: comet-move 12s linear infinite;
+}
+
+@keyframes comet-move {
+  0%   { left: -20%; opacity: 0; }
+  5%   { opacity: 1; }
+  50%  { left: 110%; opacity: 1; }
+  55%  { opacity: 0; }
+  100% { left: 110%; opacity: 0; }
+}
+
+/* Shiny galaxy text helpers */
+.text-glow {
+  color: #ffffff;
+  text-shadow:
+    0 0 6px rgba(255,255,255,0.7),
+    0 0 14px rgba(99,102,241,0.5),
+    0 0 22px rgba(59,130,246,0.35);
+}
+
+.text-glow-soft {
+  color: rgba(255,255,255,0.95);
+  text-shadow:
+    0 0 4px rgba(255,255,255,0.4),
+    0 0 10px rgba(99,102,241,0.25);
+}
+
+/* Subtle link glow for navbar */
+.link-glow {
+  color: rgba(255,255,255,0.9);
+  text-shadow:
+    0 0 3px rgba(255,255,255,0.35),
+    0 0 8px rgba(99,102,241,0.2);
+  transition: color 150ms ease, text-shadow 150ms ease, transform 150ms ease;
+}
+.link-glow:hover {
+  color: #93c5fd; /* tailwind sky-300-ish */
+  text-shadow:
+    0 0 6px rgba(255,255,255,0.6),
+    0 0 14px rgba(99,102,241,0.45),
+    0 0 22px rgba(59,130,246,0.35);
+}
+
+/* Neon-like button for auth */
+.btn-glow {
+  background: linear-gradient(135deg, rgba(37,99,235,0.95), rgba(99,102,241,0.95));
+  color: #fff;
+  border: 1px solid rgba(147,197,253,0.35);
+  text-shadow: 0 0 6px rgba(255,255,255,0.5);
+  box-shadow:
+    0 0 10px rgba(59,130,246,0.35),
+    inset 0 0 10px rgba(147,197,253,0.15);
+  transition: transform 120ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+.btn-glow:hover {
+  filter: brightness(1.07);
+  box-shadow:
+    0 0 16px rgba(59,130,246,0.55),
+    inset 0 0 12px rgba(147,197,253,0.25);
+}
+.btn-glow:active {
+  transform: translateY(1px);
+}
+
+.dark-select {
+  background-color: rgba(15, 23, 42, 0.8);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.2);
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(248, 250, 252, 0.7) 50%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.7) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.dark-select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}

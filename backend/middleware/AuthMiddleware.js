@@ -27,16 +27,18 @@ export const verifyToken = (req, res, next) => {
 
 
 // Middleware untuk memeriksa peran admin
-export const isAdmin = (req, res, next) => {
-  if (!req.admin || !req.admin.id) {
-    return res
-      .status(403)
-      .json({ error: "Akses ditolak. Anda bukan admin yang valid" });
+export const verifyAdminToken = (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(403).json({ error: "Access Denied. Token is missing." });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded?.id || decoded.role !== "admin") return res.status(403).json({ error: "Admin token required" });
+    req.admin = decoded;
+    next();
+  } catch (error) {
+    console.error("verifyAdminToken:", error.message);
+    res.status(403).json({ error: "Invalid or expired token." });
   }
-
-  // Jika ada kebutuhan untuk memeriksa lebih jauh peran admin dari database,
-  // implementasi tambahan dapat dilakukan di sini
-  next();
 };
 
 // Middleware untuk memverifikasi token secara opsional (untuk endpoint publik yang bisa menerima token)
@@ -61,3 +63,6 @@ export const verifyOptionalToken = (req, res, next) => {
 
   next();
 };
+
+// Backward-compatible alias expected by some routes
+export const verifyUserToken = verifyToken;

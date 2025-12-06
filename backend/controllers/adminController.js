@@ -59,7 +59,7 @@ export const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: "Password salah" });
     }
 
-    const token = jwt.sign({ id: admin.id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign({ id: admin.id, role: "admin" }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
     res.status(200).json({
       message: "Login berhasil",
