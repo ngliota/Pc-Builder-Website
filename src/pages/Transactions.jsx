@@ -147,14 +147,23 @@ const buildReceipt = (tx) => {
       itemDetailsList.find((d) => d.name && it.name && d.name === it.name) ||
       itemDetailsList.find((d) => d.category && it.category && d.category === it.category) ||
       itemDetailsList[0]
-    const specs =
-      it.specs ||
-      it.parts ||
-      it.components ||
-      fromSnapshot?.specs ||
-      fromSnapshot?.parts ||
-      fromSnapshot?.components ||
-      []
+    const candidates = [
+      it.specs,
+      it.parts,
+      it.components,
+      fromSnapshot?.specs,
+      fromSnapshot?.parts,
+      fromSnapshot?.components,
+    ]
+    let specs = candidates.find((c) => Array.isArray(c) && c.length > 0)
+    if (!specs) {
+      const obj = candidates.find((c) => c && typeof c === "object" && !Array.isArray(c))
+      if (obj) {
+        specs = Object.entries(obj).map(([k, v]) => ({ category: k, name: v }))
+      }
+    }
+    specs = specs || []
+
     if (!Array.isArray(specs) || !specs.length) return []
     return specs
       .map((s) => {
