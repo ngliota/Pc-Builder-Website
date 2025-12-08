@@ -9,6 +9,12 @@ const formatRM = (value) =>
 
 const peripheralWords = ["headset", "keyboard", "mouse", "speaker", "accessory", "peripheral", "mousepad", "webcam"]
 
+const isServerProduct = (item = {}) => {
+  const name = (item.name || "").toLowerCase()
+  const category = (item.category || "").toLowerCase()
+  return name.includes("(server") || category.includes("server")
+}
+
 const classifyProduct = (item = {}) => {
   const category = (item.category || "").toLowerCase().trim()
   const name = (item.name || "").toLowerCase()
@@ -17,6 +23,7 @@ const classifyProduct = (item = {}) => {
 
   if (category.includes("peripherals") || category.includes("prebuilt")) return null
   if (peripheralWords.some((w) => match(w))) return null
+  if (isServerProduct(item)) return null
 
   if (category.includes("cpu cooler") || category.includes("cooler") || match("cooler") || match("aio")) return "cooler"
   if (category === "fan") return "fan"
@@ -119,7 +126,9 @@ const isHDD = (item = {}) => {
   return tags.includes("hdd")
 }
 
-const LLM_ENABLED = process.env.RECS_USE_LLM === "true"
+// Normalize env flags so trailing spaces or casing don't break LLM toggle
+const normalizeBool = (val) => String(val || "").trim().toLowerCase() === "true"
+const LLM_ENABLED = normalizeBool(process.env.RECS_USE_LLM)
 const LLM_ENDPOINT = process.env.LLM_ENDPOINT || "http://localhost:11434/api/generate"
 const LLM_MODEL = process.env.LLM_MODEL || "llama3"
 
@@ -485,6 +494,7 @@ export const recommendBuild = async (req, res) => {
       display: finalDisplay,
       total: finalTotal,
       source: finalSource,
+      llmEnabled: LLM_ENABLED,
     })
   } catch (e) {
     console.error("recommendBuild error:", e)

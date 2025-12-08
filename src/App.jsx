@@ -1,13 +1,13 @@
 // src/App.jsx
 import React from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Signup from "./pages/Signup"
 import LoginPage from "./pages/LoginPage"
 import Checkout from "./pages/Checkout"
 import AdminDashboard from "./pages/admin/AdminDashboard"
-import AdminLoginPage from "./pages/admin/AdminLoginPage" // Create this file
+import AdminLoginPage from "./pages/admin/AdminLoginPage"
 import AdminProducts from "./pages/admin/AdminProducts"
 import AdminProductNew from "./pages/admin/AdminProductNew"
 import AdminPrebuilts from "./pages/admin/AdminPrebuilts"
@@ -27,42 +27,31 @@ const ProtectedRoute = ({ element, role }) => {
   return isAuthenticated ? element : <Navigate to={redirectTo} replace />
 }
 
-const LayoutWrapper = ({ children }) => {
-  const location = useLocation()
-  const isAdminPage = location.pathname.startsWith("/admin")
-  const showAdminSidebar = isAdminPage && location.pathname !== "/admin"
+const UserLayout = () => (
+  <>
+    <Navbar />
+    <main className="pt-0 min-h-screen overflow-hidden pb-16 sm:pb-20 starfield text-white/90">
+      <Outlet />
+    </main>
+    <Footer />
+  </>
+);
 
-  if (showAdminSidebar) {
-    return (
-      <div className="min-h-screen bg-[#030617]">
-        <SideNavbarAdmin />
-        <main className="ml-64 min-h-screen overflow-x-hidden bg-[#030617]">{children}</main>
-      </div>
-    )
-  }
-
-  if (isAdminPage) {
-    return <>{children}</>
-  }
-
-  return (
-    <>
-      <Navbar />
-      <main className="pt-0 min-h-screen overflow-hidden pb-16 sm:pb-20 starfield text-white/90">
-        {children}
-      </main>
-      <Footer />
-    </>
-  )
-}
+const AdminLayout = () => (
+  <div className="min-h-screen bg-[#030617]">
+    <SideNavbarAdmin />
+    <main className="ml-64 min-h-screen overflow-x-hidden bg-[#030617]">
+      <Outlet />
+    </main>
+  </div>
+);
 
 function App() {
   return (
     <Router>
-      <LayoutWrapper>
-        <Routes>
+      <Routes>
+        <Route element={<UserLayout />}>
           <Route path="/" element={<Home />} />
-          {/* Explicit home route to avoid wildcard redirect */}
           <Route path="/home" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<LoginPage />} />
@@ -78,34 +67,20 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/simulation" element={<Simulation />} />
           <Route path="/prebuild/:id" element={<PrebuildDetail />} />
-          <Route path="/admin" element={<AdminLoginPage />} />
+        </Route>
 
-          {/* Admin dashboard protected by JWT */}
-          <Route
-            path="/admin/dashboard"
-            element={<ProtectedRoute element={<AdminDashboard />} role="admin" />}
-          />
-          <Route
-            path="/admin/products"
-            element={<ProtectedRoute element={<AdminProducts />} role="admin" />}
-          />
-          <Route
-            path="/admin/products/new"
-            element={<ProtectedRoute element={<AdminProductNew />} role="admin" />}
-          />
-          <Route
-            path="/admin/prebuilts"
-            element={<ProtectedRoute element={<AdminPrebuilts />} role="admin" />}
-          />
-          <Route
-            path="/admin/orders"
-            element={<ProtectedRoute element={<AdminOrders />} role="admin" />}
-          />
+        <Route path="/admin" element={<AdminLoginPage />} />
 
-          {/* 404 fallback to canonical home */}
-          <Route path="*" element={<Navigate to="/home" replace />} />
-        </Routes>
-      </LayoutWrapper>
+        <Route element={<ProtectedRoute element={<AdminLayout />} role="admin" />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/products/new" element={<AdminProductNew />} />
+          <Route path="/admin/prebuilts" element={<AdminPrebuilts />} />
+          <Route path="/admin/orders" element={<AdminOrders />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
     </Router>
   )
 }

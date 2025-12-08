@@ -8,7 +8,14 @@ const Order = db.define(
     id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
     transaction_id: { type: DataTypes.STRING, allowNull: false },
     userid: { type: DataTypes.STRING, allowNull: false },
-    status: { type: DataTypes.STRING, allowNull: false, defaultValue: "to-build" }, // to-build, sending, sent
+    status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "to-build",
+      validate: {
+        isIn: [["to-build", "building", "sending", "sent", "cancelled", "refunded"]],
+      },
+    }, // to-build, building, sending, sent, cancelled, refunded
     status_changed_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     subtotal: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     discount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },

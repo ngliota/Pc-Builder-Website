@@ -25,7 +25,7 @@ const Profile = () => {
     try {
       const { id, username } = decodeToken()
       const key = getProfileKey()
-      const raw = id ? localStorage.getItem(key) || "{}" : localStorage.getItem("userProfile") || "{}"
+      const raw = localStorage.getItem(key) || "{}"
       const parsed = JSON.parse(raw)
       const fallbackUsername = username || ""
       setProfile({
@@ -43,9 +43,8 @@ const Profile = () => {
 
   const saveProfile = () => {
     const next = { ...profile }
-    // persist per-user and legacy key for compatibility
+    // persist per-user only
     localStorage.setItem(getProfileKey(), JSON.stringify(next))
-    localStorage.setItem("userProfile", JSON.stringify(next))
     window.dispatchEvent(new Event("profile-update"))
     setMessage("Profile saved.")
     setTimeout(() => setMessage(""), 2000)

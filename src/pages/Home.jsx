@@ -6,15 +6,15 @@ import { motion } from "framer-motion"
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
 const differentiators = [
-  { title: "Lifetime free technical support", icon: "SUP", emoji: "🛠️" },
-  { title: "Professional cable management", icon: "CBL", emoji: "🧵" },
-  { title: "Lifetime free dust cleaning services", icon: "CLS", emoji: "🧹" },
-  { title: "Full year 1-to-1 warranty exchange", icon: "WRN", emoji: "🔄" },
-  { title: "Free delivery & installation", icon: "DEL", emoji: "🚚" },
-  { title: "Professional stress testing", icon: "TST", emoji: "🔬" },
-  { title: "Free on-site service / repair (JB)", icon: "SRV", emoji: "🏡" },
-  { title: "Delivery to whole Indonesia", icon: "MY", emoji: "🌏" },
-  { title: "Free nationwide warranty pickup/return", icon: "P/R", emoji: "📦" },
+  { title: "Lifetime free technical support", icon: "SUP", emoji: "\u{1F6E0}\uFE0F" },
+  { title: "Professional cable management", icon: "CBL", emoji: "\u{1F9F5}" },
+  { title: "Lifetime free dust cleaning services", icon: "CLS", emoji: "\u{1F9F9}" },
+  { title: "Full year 1-to-1 warranty exchange", icon: "WRN", emoji: "\u{1F6E1}\uFE0F" },
+  { title: "Free delivery & installation", icon: "DEL", emoji: "\u{1F69A}" },
+  { title: "Professional stress testing", icon: "TST", emoji: "\u{1F4CA}" },
+  { title: "Free on-site service / repair (JB)", icon: "SRV", emoji: "\u{1F9F0}" },
+  { title: "Delivery to whole Indonesia", icon: "MY", emoji: "\u{1F30F}" },
+  { title: "Free nationwide warranty pickup/return", icon: "P/R", emoji: "\u{1F501}" },
 ]
 
 const partnerLogos = [
@@ -283,3 +283,4 @@ export default function Home() {
     </motion.div>
   )
 }
+

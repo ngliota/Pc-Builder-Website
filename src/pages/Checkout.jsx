@@ -5,6 +5,19 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
 const formatRM = (value) =>
   `RM ${(Number(value ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const SERVICE_PRICES = { overclock: 50, windows: 30 }
+const useCaseLabel = (value = "") => {
+  const map = { gaming: "Gaming", content: "Content", mixed: "Mixed", office: "Office" }
+  const key = String(value || "").toLowerCase()
+  return map[key] || value
+}
+const displayItemName = (name = "") => {
+  let out = name
+  const match = out.match(/^Custom Build -\s*([a-z]+)\b/i)
+  if (match) {
+    out = out.replace(match[1], useCaseLabel(match[1]))
+  }
+  return out
+}
 
 export default function Checkout() {
   const navigate = useNavigate()
@@ -145,9 +158,10 @@ export default function Checkout() {
   }
 
   const syncProfile = () => {
+    const { username } = decodeToken()
+    const key = profileKey()
     try {
-      const { username } = decodeToken()
-      const raw = localStorage.getItem(profileKey()) || localStorage.getItem("userProfile") || "{}"
+      const raw = localStorage.getItem(key) || "{}"
       const parsed = JSON.parse(raw)
       setProfile({
         username: parsed.username || username || "User",
@@ -156,7 +170,6 @@ export default function Checkout() {
         address: parsed.address || "",
       })
     } catch {
-      const { username } = decodeToken()
       setProfile({ username: username || "User", email: "", phone: "", address: "" })
     }
   }
@@ -164,7 +177,6 @@ export default function Checkout() {
   const saveProfile = () => {
     const payload = { ...profile, userid: resolveUserId() || "" }
     localStorage.setItem(profileKey(), JSON.stringify(payload))
-    localStorage.setItem("userProfile", JSON.stringify(payload))
     window.dispatchEvent(new Event("profile-update"))
     setProfileSaved("Contact info saved for this checkout.")
     setTimeout(() => setProfileSaved(""), 2000)
@@ -263,44 +275,14 @@ export default function Checkout() {
     return ""
   }
 
-  const handleCardPay = async () => {
-    if (!selectedItems.length) {
-      setError("Select at least one item to pay.")
-      return
-    }
-    const validation = validateCard()
-    if (validation) {
-      setCardError(validation)
-      return
-    }
-    setCardError("")
-    setCardSuccess(false)
-    setCardProcessing(true)
-    const steps = [
-      "Checking card credentials...",
-      "Authorizing the card provider...",
-      "Wiring the payment...",
-    ]
-    for (const step of steps) {
-      setCardStage(step)
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 700))
-    }
-    const ok = await placeOrder({ skipNavigate: true })
-    setCardProcessing(false)
-    if (ok) {
-      setCardStage("Payment successful.")
-      setCardSuccess(true)
-    } else {
-      setCardStage("")
-    }
+const paymentMask = (method, cardNumber = "") => {
+  if (method === "card") {
+    const digits = (cardNumber || "").replace(/\D/g, "")
+    const last4 = digits.slice(-4) || "4242"
+    return `Card **** ${last4}`
   }
-
-  const paymentMask = (method) => {
-    if (method === "card") return "VISA **** 4242"
-    if (method === "cod") return "Pay on delivery"
-    return "FPX Online Banking"
-  }
+  return "FPX Online Banking"
+}
 
   const incrementLocalSold = (list) => {
     try {
@@ -319,11 +301,16 @@ export default function Checkout() {
   }
 
   const placeOrder = async (options = {}) => {
-    const { skipNavigate = false } = options
+    const { skipNavigate = false, withCardChecks = false } = options
+    const trimmedAddress = (profile.address || "").trim()
     setError("")
     setStatus("")
     if (!selectedItems.length) {
       setError("Select at least one item to pay.")
+      return false
+    }
+    if (!trimmedAddress) {
+      setError("Please add your address before placing the order.")
       return false
     }
     const token = localStorage.getItem("userToken") || localStorage.getItem("token")
@@ -332,7 +319,33 @@ export default function Checkout() {
       navigate("/login")
       return false
     }
+    if (withCardChecks) {
+      const validation = validateCard()
+      if (validation) {
+        setCardError(validation)
+        return false
+      }
+      setCardError("")
+      setCardSuccess(false)
+    } else {
+      setCardStage("")
+      setCardError("")
+    }
     setPlacing(true)
+    if (withCardChecks) {
+      setCardProcessing(true)
+      const steps = [
+        "Checking card credentials...",
+        "Authorizing the card provider...",
+        "Wiring the payment...",
+      ]
+      for (const step of steps) {
+        setCardStage(step)
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 700))
+      }
+      setCardStage("Placing order...")
+    }
     let success = false
     try {
       const payload = {
@@ -357,7 +370,11 @@ export default function Checkout() {
         servicesTotal: Number(appliedServicesTotal.toFixed(2)),
         total: Number(total.toFixed(2)),
         paymentMethod,
-        paymentMasked: paymentMask(paymentMethod),
+        paymentMasked: paymentMask(paymentMethod, cardDetails.number),
+        billingName: profile.username || profile.name || "Customer",
+        billingEmail: profile.email || "",
+        billingPhone: profile.phone || "",
+        billingAddress: trimmedAddress,
       }
 
       const res = await fetch(`${API_URL}/api/orders`, {
@@ -368,6 +385,10 @@ export default function Checkout() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.message || data?.error || "Failed to place order.")
       success = true
+      if (withCardChecks) {
+        setCardStage("Payment successful. Finalizing order...")
+        setCardSuccess(true)
+      }
       setStatus(skipNavigate ? "Payment successful. You can review or proceed." : "Order placed successfully. Redirecting to transactions...")
       const remaining = items.filter((it) => !selectedItems.find((sel) => sel.id === it.id))
       persistCart(remaining)
@@ -382,8 +403,12 @@ export default function Checkout() {
     } catch (e) {
       success = false
       setError(e.message || "Failed to place order.")
+      if (withCardChecks) {
+        setCardStage("Payment failed. Please try again.")
+      }
     } finally {
       setPlacing(false)
+      if (withCardChecks) setCardProcessing(false)
     }
     return success
   }
@@ -402,6 +427,8 @@ export default function Checkout() {
     const str = String(value)
     return str.charAt(0).toUpperCase() + str.slice(1)
   }
+
+  const hasAddress = Boolean((profile.address || "").trim())
 
   return (
     <div className="relative min-h-screen bg-[#030617] text-white">
@@ -500,7 +527,7 @@ export default function Checkout() {
                                 className="h-4 w-4 rounded border-white/30 bg-white/10"
                                 aria-label="Select item for payment"
                               />
-                              <div className="text-base font-semibold text-white">{item.name}</div>
+                              <div className="text-base font-semibold text-white">{displayItemName(item.name)}</div>
                             </div>
                             <div className="text-xs text-slate-400">#{item.id}</div>
                             {specsPreview(item) && (
@@ -672,7 +699,7 @@ export default function Checkout() {
                   onClick={saveProfile}
                   className="rounded-lg border border-cyan-400/50 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-cyan-50 hover:border-cyan-300"
                 >
-                  Save contact locally
+                  Save address
                 </button>
                 <Link
                   to="/profile"
@@ -729,7 +756,6 @@ export default function Checkout() {
                       logos: ["/payment/visa.png", "/payment/mastercard.png", "/payment/amex.png", "/payment/unionpay.png"],
                     },
                     { key: "fpx", label: "Online banking (FPX)", note: "Instant confirmation" },
-                    { key: "cod", label: "Pay on delivery", note: "Full payment on arrival" },
                   ].map((opt) => (
                     <label
                       key={opt.key}
@@ -820,44 +846,18 @@ export default function Checkout() {
                       </div>
                     </div>
                     {cardStage && (
-                      <div className="rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 animate-pulse">
+                      <div className={`rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 ${cardProcessing ? "animate-pulse" : ""}`}>
                         {cardStage}
                       </div>
                     )}
                     {cardSuccess && (
                       <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
-                        Payment successful. Choose an option below.
+                        Payment successful. Finalizing your order.
                       </div>
                     )}
-                    {!cardSuccess && (
-                      <button
-                        onClick={handleCardPay}
-                        disabled={cardProcessing || placing}
-                        className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow shadow-blue-900/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {cardProcessing ? "Processing..." : "Pay Now"}
-                      </button>
-                    )}
-                    {cardSuccess && (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => {
-                            setCardSuccess(false)
-                            setCardStage("")
-                            setStatus("Payment successful.")
-                          }}
-                          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:border-white/20"
-                        >
-                          Ok
-                        </button>
-                        <button
-                          onClick={() => navigate("/transactions")}
-                          className="rounded-lg border border-emerald-400/50 bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-50 hover:border-emerald-300"
-                        >
-                          Check Transaction
-                        </button>
-                      </div>
-                    )}
+                    <p className="text-[11px] text-slate-400">
+                      Place order will run a secure card check before confirming.
+                    </p>
                   </div>
                 )}
               </div>
@@ -890,18 +890,21 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {paymentMethod !== "card" && (
-                <button
-                  onClick={() => placeOrder()}
-                  disabled={!selectedItems.length || placing}
-                  className="mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3 text-center text-base font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {placing ? "Placing order..." : `Place order (${formatRM(total)})`}
-                </button>
+              <button
+                onClick={() => placeOrder({ withCardChecks: paymentMethod === "card" })}
+                disabled={!selectedItems.length || placing || cardProcessing || !hasAddress}
+                className="mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3 text-center text-base font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {placing || cardProcessing ? "Placing order..." : `Place order (${formatRM(total)})`}
+              </button>
+              {!hasAddress && (
+                <p className="mt-2 text-center text-[11px] text-amber-200">
+                  Add your address above to enable placing the order.
+                </p>
               )}
               {paymentMethod === "card" && (
                 <p className="mt-2 text-center text-[11px] text-slate-400">
-                  Enter card details above and tap Pay Now to continue.
+                  Card verification runs when you tap Place order.
                 </p>
               )}
               <p className="mt-2 text-center text-[11px] text-slate-400">

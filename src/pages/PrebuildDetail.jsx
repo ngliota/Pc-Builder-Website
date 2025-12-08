@@ -114,9 +114,7 @@ useEffect(() => {
   const cartKey = () => {
     try {
       const { id } = decodeToken()
-      const rawProfile = id ? (localStorage.getItem(`userProfile_${id}`) || "{}") : (localStorage.getItem("userProfile") || "{}")
-      const parsed = JSON.parse(rawProfile)
-      const uid = parsed?.userid || parsed?.id || id
+      const uid = id || null
       return uid ? `cartItems_${uid}` : "cartItems_guest"
     } catch {
       return "cartItems_guest"
@@ -162,9 +160,7 @@ useEffect(() => {
   const checkoutItemKey = () => {
     try {
       const { id } = decodeToken()
-      const rawProfile = id ? (localStorage.getItem(`userProfile_${id}`) || "{}") : (localStorage.getItem("userProfile") || "{}")
-      const parsed = JSON.parse(rawProfile)
-      const uid = parsed?.userid || parsed?.id || id
+      const uid = id || null
       return uid ? `checkoutItem_${uid}` : "checkoutItem_guest"
     } catch {
       return "checkoutItem_guest"

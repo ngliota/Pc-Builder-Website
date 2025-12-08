@@ -42,6 +42,7 @@ import simulationRoutes from "../routes/simulationRoutes.js"
 import uploadRoutes from "../routes/uploadRoutes.js"
 import recommendationRoutes from "../routes/recommendationRoutes.js"
 import orderRoutes from "../routes/orderRoutes.js"
+import dashboardRoutes from "../routes/dashboardRoutes.js"
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -109,6 +110,7 @@ app.use("/api/simulations", simulationRoutes)
 app.use("/api/uploads", uploadRoutes)
 app.use("/api/recommendations", recommendationRoutes)
 app.use("/api/orders", orderRoutes)
+app.use("/api/dashboard", dashboardRoutes)
 
 // === 404 Handler ===
 app.use((req, res) => {

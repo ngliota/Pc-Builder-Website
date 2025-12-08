@@ -42,7 +42,7 @@ const attachPrebuiltDetails = async (items = []) => {
       continue
     }
     try {
-      const prebuilt = await Prebuilt.findByPk(it.product_id || it.id, {
+      const prebuilt = await Prebuilt.findByPk(it.product_id, {
         include: [
           {
             model: PrebuiltComponent,
@@ -96,6 +96,10 @@ export const createOrder = async (req, res) => {
       total = 0,
       paymentMethod,
       paymentMasked,
+      billingName,
+      billingEmail,
+      billingPhone,
+      billingAddress,
     } = req.body
 
     if (!Array.isArray(items) || !items.length) throw createError("Items are required")
@@ -124,7 +128,7 @@ export const createOrder = async (req, res) => {
 
     for (const item of items) {
       const qty = Math.max(1, Number(item.quantity || 1))
-      const pid = item.product_id ?? item.productId ?? null
+      const pid = item.product_id ?? item.productId ?? item.id ?? null
       await OrderItem.create(
         {
           order_id: order.id,
@@ -152,7 +156,7 @@ export const createOrder = async (req, res) => {
       if (isPrebuilt) {
         const prebuilt = await Prebuilt.findByPk(item.id || pid, {
           transaction: t,
-          include: [{ model: PrebuiltComponent, as: "components" }],
+          include: [{ model: PrebuiltComponent, as: "components", include: [{ model: Product, as: "product" }] }],
         })
         if (prebuilt) {
           prebuilt.stock = Math.max(0, Number(prebuilt.stock || 0) - qty)
@@ -198,7 +202,14 @@ export const createOrder = async (req, res) => {
       })
     }
 
-    const servicesMerged = { ...(services || {}), itemDetails: detailSnapshot }
+    const servicesMerged = {
+      ...(services || {}),
+      billingName,
+      billingEmail,
+      billingPhone,
+      billingAddress,
+      itemDetails: detailSnapshot,
+    }
     order.services = servicesMerged
     await order.save({ transaction: t })
 

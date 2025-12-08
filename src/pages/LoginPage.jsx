@@ -26,6 +26,18 @@ const LoginPage = () => {
       if (response.ok) {
         const data = await response.json()
         localStorage.setItem("userToken", data.token)
+        if (data.user && data.user.id) {
+          const key = `userProfile_${data.user.id}`
+          const profilePayload = {
+            userid: data.user.id,
+            username: data.user.username || username,
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+            address: "",
+          }
+          localStorage.setItem(key, JSON.stringify(profilePayload))
+          window.dispatchEvent(new Event("profile-update"))
+        }
         navigate("/")
       } else {
         let errorData = {}

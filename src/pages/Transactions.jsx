@@ -8,6 +8,19 @@ const titleCase = (value) => {
   const str = String(value).trim().toLowerCase()
   return str.replace(/\b\w/g, (c) => c.toUpperCase())
 }
+const useCaseLabel = (value = "") => {
+  const map = { gaming: "Gaming", content: "Content", mixed: "Mixed", office: "Office" }
+  const key = String(value || "").toLowerCase()
+  return map[key] || value
+}
+const displayItemName = (value = "") => {
+  let out = String(value || "")
+  const match = out.match(/^Custom Build -\s*([a-z]+)\b/i)
+  if (match) {
+    out = out.replace(match[1], useCaseLabel(match[1]))
+  }
+  return out
+}
 const normalizeCategory = (value) => {
   if (!value) return ""
   const upper = String(value).toUpperCase()
@@ -17,6 +30,17 @@ const normalizeCategory = (value) => {
 }
 
 const formatServices = (services) => {
+  const ignoreKeys = new Set([
+    "itemDetails",
+    "billingName",
+    "billingEmail",
+    "billingPhone",
+    "billingAddress",
+    "billing_name",
+    "billing_email",
+    "billing_phone",
+    "billing_address",
+  ])
   if (services && typeof services === "object" && !Array.isArray(services) && services.itemDetails) {
     // strip internal itemDetails snapshot
     const { itemDetails: _itemDetails, ...rest } = services
@@ -46,7 +70,13 @@ const formatServices = (services) => {
   }
   if (typeof services === "object") {
     const entries = Object.entries(services)
-      .filter(([, v]) => Boolean(v))
+      .filter(([k]) => !ignoreKeys.has(k))
+      .filter(([, v]) => {
+        if (typeof v === "boolean") return v
+        if (typeof v === "number") return v > 0
+        if (typeof v === "string") return v.trim().toLowerCase() === "true"
+        return false
+      })
       .map(([k]) => labelMap[k] || k.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()))
     return entries.length ? entries.join(", ") : "None"
   }
@@ -91,30 +121,45 @@ const buildReceipt = (tx) => {
   const created = tx.createdAt || tx.created_at || tx.date || Date.now()
   const dateStr = new Date(created).toLocaleString()
   const invoiceId = tx.transaction_id || `INV-${tx.id}`
-  const eta = (tx.delivery_option || tx.deliveryOption || "").toLowerCase() === "express" ? "Estimated Delivery: 1-2 business days" : "Estimated Delivery: 3-5 business days"
+  const eta = (tx.delivery_option || tx.deliveryOption || "").toLowerCase() === "express" ? "Estimated Delivery: 1-2 Business Days" : "Estimated Delivery: 3-5 Business Days"
 
-  doc.setFillColor(79, 70, 229)
-  doc.rect(10, 12, 4, 12, "F")
+  const billingName = tx.billingName || tx.billing_name || servicesData.billingName || servicesData.billing_name || "Customer"
+  const billingEmail = tx.billingEmail || tx.billing_email || servicesData.billingEmail || servicesData.billing_email || ""
+  const billingPhone = tx.billingPhone || tx.billing_phone || servicesData.billingPhone || servicesData.billing_phone || ""
+  const billingAddress = tx.billingAddress || tx.billing_address || servicesData.billingAddress || servicesData.billing_address || ""
+
+  // Header background
+  doc.setFillColor(248, 249, 253)
+  doc.rect(0, 0, 210, 40, "F")
+  // Brand mark (simple block logo inspired by navbar colors)
+  doc.setFillColor(99, 102, 241) // indigo block
+  doc.rect(10, 12, 6, 14, "F")
+  doc.setFillColor(16, 185, 129) // teal block
+  doc.rect(17, 12, 6, 14, "F")
+
+  doc.setTextColor(20, 24, 35)
   doc.setFontSize(18)
-  doc.text(brand, 18, 20)
+  doc.text(brand, 28, 20)
   doc.setFontSize(10)
-  doc.text(brandOwner, 18, 26)
-  doc.text(brandAddress, 18, 32, { maxWidth: 80 })
+  doc.text(brandOwner, 28, 26)
+  doc.text(brandAddress, 28, 32, { maxWidth: 80 })
+  doc.setFontSize(10)
   doc.text(`Date: ${dateStr}`, 150, 16)
   doc.text(`Invoice: ${invoiceId}`, 150, 22)
+  doc.setTextColor(0, 0, 0)
 
   doc.setFontSize(11)
   doc.text("Billing", 10, 40)
   doc.setFontSize(10)
   let by = 46
-  doc.text(tx?.billingName || "Customer", 10, by); by += 6
-  if (tx?.billingAddress) {
-    const addrLines = doc.splitTextToSize(tx.billingAddress, 80)
+  doc.text(billingName || "Customer", 10, by); by += 6
+  if (billingAddress) {
+    const addrLines = doc.splitTextToSize(billingAddress, 80)
     doc.text(addrLines, 10, by)
     by += addrLines.length * 6
   }
-  if (tx?.billingPhone) { doc.text(`Phone: ${tx.billingPhone}`, 10, by); by += 6 }
-  if (tx?.billingEmail) { doc.text(`Email: ${tx.billingEmail}`, 10, by); by += 6 }
+  if (billingPhone) { doc.text(`Phone: ${billingPhone}`, 10, by); by += 6 }
+  if (billingEmail) { doc.text(`Email: ${billingEmail}`, 10, by); by += 6 }
 
   doc.setFontSize(11)
   doc.text("Payment", 120, 34)
@@ -124,6 +169,14 @@ const buildReceipt = (tx) => {
   doc.text(eta, 120, 52, { maxWidth: 80 })
 
   let y = Math.max(by + 8, 78)
+  const newPageIfNeeded = (needed = 0) => {
+    if (y + needed < 285) return
+    doc.addPage()
+    y = 20
+    doc.setFontSize(10)
+    doc.setDrawColor(200, 200, 200)
+  }
+
   doc.setFontSize(10)
   doc.setDrawColor(200, 200, 200)
   doc.line(10, y, 200, y)
@@ -140,6 +193,48 @@ const buildReceipt = (tx) => {
   const items = tx.items || []
   const itemDetailsList = servicesData?.itemDetails || []
   const itemDetailsMap = new Map(itemDetailsList.map((d, idx) => [String(d.key ?? idx), d]))
+  const buildDetailLines = (specsInput, componentsInput) => {
+    // Prefer explicit components array
+    if (Array.isArray(componentsInput) && componentsInput.length) {
+      return componentsInput
+        .map((c) => {
+          const cat = normalizeCategory(c.category || c.type || c.key || "")
+          const name = (c.name || c.value || c.product || c.item || c.title || "").trim()
+          const qty = c.quantity || c.qty
+          if (!name) return null
+          const qtyText = qty ? ` (x${qty})` : ""
+          return cat ? `${cat}: ${name}${qtyText}` : `${name}${qtyText}`
+        })
+        .filter(Boolean)
+    }
+    // Handle specs.package array (often used for prebuilts)
+    if (specsInput?.package && Array.isArray(specsInput.package)) {
+      return specsInput.package
+        .map((s) => {
+          const cat = normalizeCategory(s.category || s.type || s.key || "")
+          const name = (s.name || s.value || s.product || s.item || s.title || "").trim()
+          const qty = s.quantity || s.qty
+          if (!name) return null
+          const qtyText = qty ? ` (x${qty})` : ""
+          return cat ? `${cat}: ${name}${qtyText}` : `${name}${qtyText}`
+        })
+        .filter(Boolean)
+    }
+    // Handle specs as array
+    if (Array.isArray(specsInput) && specsInput.length) {
+      return specsInput
+        .map((s) => {
+          const cat = normalizeCategory(s.category || s.type || s.key || "")
+          const name = (s.name || s.value || s.product || s.item || s.title || "").trim()
+          const qty = s.quantity || s.qty
+          if (!name) return null
+          const qtyText = qty ? ` (x${qty})` : ""
+          return cat ? `${cat}: ${name}${qtyText}` : `${name}${qtyText}`
+        })
+        .filter(Boolean)
+    }
+    return []
+  }
   const detailRows = (it) => {
     const key = String(it.product_id ?? it.id ?? it.name ?? "")
     const fromSnapshot =
@@ -147,26 +242,10 @@ const buildReceipt = (tx) => {
       itemDetailsList.find((d) => d.name && it.name && d.name === it.name) ||
       itemDetailsList.find((d) => d.category && it.category && d.category === it.category) ||
       itemDetailsList[0]
-    const specs =
-      it.specs ||
-      it.parts ||
-      it.components ||
-      fromSnapshot?.specs ||
-      fromSnapshot?.parts ||
-      fromSnapshot?.components ||
-      []
-    if (!Array.isArray(specs) || !specs.length) return []
-    return specs
-      .map((s) => {
-        const rawCat = s.category || s.type || s.key || ""
-        const name = (s.name || s.value || s.product || s.item || s.title || "").trim()
-        const qty = s.quantity || s.qty
-        if (!name) return null
-        const cat = rawCat ? normalizeCategory(rawCat) : ""
-        const qtyText = qty ? ` (x${qty})` : ""
-        return cat ? `${cat}: ${name}${qtyText}` : `${name}${qtyText}`
-      })
-      .filter(Boolean)
+    return buildDetailLines(
+      it.specs || it.parts || fromSnapshot?.specs || fromSnapshot?.parts || null,
+      it.components || fromSnapshot?.components || null
+    )
   }
   items.forEach((it, idx) => {
     const lineTotal = Number(it.price || 0) * Number(it.quantity || 1)
@@ -175,6 +254,7 @@ const buildReceipt = (tx) => {
     const itemName = [itemCategory, itemNameRaw].filter(Boolean).join(" - ") || "Item"
     const nameLines = doc.splitTextToSize(itemName, 90)
     nameLines.forEach((line, lineIdx) => {
+      newPageIfNeeded(12)
       doc.text(lineIdx === 0 ? String(idx + 1) : "", 12, y)
       doc.text(line, 20, y, { maxWidth: 90 })
       if (lineIdx === 0) {
@@ -186,14 +266,15 @@ const buildReceipt = (tx) => {
     })
     const extras = detailRows(it)
     extras.forEach((d) => {
+      newPageIfNeeded(10)
       const dLines = doc.splitTextToSize(d, 160)
       dLines.forEach((dl) => {
+        newPageIfNeeded(8)
         doc.text(`- ${dl}`, 26, y)
         y += 5
       })
     })
-    const unitText = `Unit: ${formatRM(it.price || 0)}   Qty: ${it.quantity || 1}   Line: ${formatRM(lineTotal)}`
-    doc.text(unitText, 26, y)
+    newPageIfNeeded(10)
     y += 6
   })
 
@@ -355,7 +436,7 @@ export default function Transactions() {
                 <ul className="list-disc list-inside text-slate-300">
                   {(tx.items || []).map((it) => (
                     <li key={`${it.id}-${it.name}`} className="flex justify-between">
-                      <span>{it.name} x{it.quantity}</span>
+                      <span>{displayItemName(it.name)} x{it.quantity}</span>
                       <span>{formatRM(Number(it.price || 0) * Number(it.quantity || 1))}</span>
                     </li>
                   ))}
